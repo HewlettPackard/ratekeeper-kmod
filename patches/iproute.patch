@@ -1,0 +1,49 @@
+diff --git a/include/linux/tc_act/tc_mirred.h b/include/linux/tc_act/tc_mirred.h
+index 7561750..d1562d9 100644
+--- a/include/linux/tc_act/tc_mirred.h
++++ b/include/linux/tc_act/tc_mirred.h
+@@ -9,6 +9,7 @@
+ #define TCA_EGRESS_MIRROR 2 /* mirror packet to EGRESS */
+ #define TCA_INGRESS_REDIR 3  /* packet redirect to INGRESS*/
+ #define TCA_INGRESS_MIRROR 4 /* mirror packet to INGRESS */
++#define TCA_INTERCEPT 5
+                                                                                 
+ struct tc_mirred {
+ 	tc_gen;
+diff --git a/tc/m_mirred.c b/tc/m_mirred.c
+index dc231d7..c5a6332 100644
+--- a/tc/m_mirred.c
++++ b/tc/m_mirred.c
+@@ -32,9 +32,10 @@ explain(void)
+ 	fprintf(stderr, "Usage: mirred <DIRECTION> <ACTION> [index INDEX] <dev DEVICENAME> \n");
+ 	fprintf(stderr, "where: \n");
+ 	fprintf(stderr, "\tDIRECTION := <ingress | egress>\n");
+-	fprintf(stderr, "\tACTION := <mirror | redirect>\n");
++	fprintf(stderr, "\tACTION := <mirror | redirect | intercept>\n");
+ 	fprintf(stderr, "\tINDEX  is the specific policy instance id\n");
+ 	fprintf(stderr, "\tDEVICENAME is the devicename \n");
++	fprintf(stderr, "\tintercept action is only useful when using Ratekeeper\n");
+ 
+ }
+ 
+@@ -56,6 +57,8 @@ static const char *mirred_n2a(int action)
+ 		return "Egress Mirror";
+ 	case TCA_INGRESS_MIRROR:
+ 		return "Ingress Mirror";
++	case TCA_INTERCEPT:
++		return "Intercept";
+ 	default:
+ 		return "unknown";
+ 	}
+@@ -120,6 +123,11 @@ parse_egress(struct action_util *a, int *argc_p, char ***argv_p,
+ 				p.eaction = TCA_EGRESS_REDIR;
+ 				p.action = TC_ACT_STOLEN;
+ 				ok++;
++			} else if (!redir && matches(*argv, "intercept") == 0) {
++				mirror=1;
++				p.eaction = TCA_INTERCEPT;
++				p.action = TC_ACT_PIPE;
++				ok++;
+ 			} else if ((redir || mirror) && matches(*argv, "dev") == 0) {
+ 				NEXT_ARG();
+ 				if (strlen(d))

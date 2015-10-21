@@ -1,0 +1,102 @@
+#! /bin/bash
+# This is not an autoconf generated configure
+#
+
+# minimum is 3.0.x
+# maximum is 4.1.x
+
+force_build=
+act_mirred_version=
+kerneldir=/lib/modules/$(uname -r)
+arch=`uname -m`
+
+usage() {
+    cat <<-EOF
+	Usage: $0 [options]
+
+	Options include:
+	    --kerneldir=DIR             kernel build directory ($kerneldir)
+	    --force-act-mirred-ver=x.x  continue even if kernel is not supported, use
+	                                provided version of act_mirred to download/patch 
+	    --help                      this helpful text
+EOF
+    exit 1
+}
+
+while [[ "$1" = -* ]]; do
+    opt="$1"; shift
+    arg=
+    hasarg=
+    if [[ "$opt" = *=* ]]; then
+        arg="${opt#*=}"
+        opt="${opt%%=*}"
+        hasarg=1
+    fi
+    case "$opt" in
+        --kerneldir)
+            kerneldir="$arg"
+            ;;
+        --force-act-mirred-ver)
+            force_build=1
+            act_mirred_version="$arg"
+            ;;
+        --arch)
+            arch="$arg"
+            ;;
+        --help)
+            usage
+            ;;
+        *)
+            usage
+            ;;
+    esac
+done
+
+check_kernelversion()
+{
+    kern_ver_str=$(uname -r)
+    #kern_ver_str="2.19.0-15-generic"
+    kern_ver=$(echo $kern_ver_str | sed -r 's/([0-9]+)/0000\1/g; s/0*([0-9]{4})/\1/g') 
+    if [ ! -n "$force_build" ]; then
+        if [[ "$kern_ver" < "0003.0000.0000" ]]; then 
+		echo no
+                echo
+                echo "Error: kernel is too old for this ratekeeper-kmod release."
+                echo
+                exit 1
+        elif [[ "$kern_ver" > "0004.0001.9999" ]]; then 
+		echo no
+                echo
+                echo "Error: kernel is more recent than RK modules delivered with this release."
+                echo
+		exit 1
+	else
+            echo yes
+            act_mirred_version=$(echo $kern_ver_str | cut -d '.' -f1,2)
+	fi
+    fi
+}
+
+rk_version() {
+    local fname="$(dirname "$0")/RK_VERSION"
+
+    if test -f "$fname"; then
+        cat "$fname"
+    else
+        echo "rk-devel"
+    fi
+}
+
+echo -n " Supported kernel version: "
+check_kernelversion
+
+rk_version
+
+cat <<EOF > config.mak
+export ARCH=$arch
+PREFIX=$prefix
+KDIR=$kerneldir
+KERNELVERSION=$kern_ver_str
+RK_VERSION=$(rk_version)
+ACT_MIRRED_VERSION=$act_mirred_version
+EOF

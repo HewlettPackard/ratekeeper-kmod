@@ -1,0 +1,108 @@
+#!/bin/sh
+
+### BEGIN INIT INFO
+# Provides:             ratekeeper
+# Required-Start:       $local_fs $remote_fs $network
+# Required-Stop:
+# Default-Start:        2 3 4 5
+# Default-Stop:         0 1 6
+# Short-Description:    Ratekeeper Daemon
+### END INIT INFO
+
+PATH=/bin:/usr/bin:/sbin:/usr/sbin
+DAEMON=/usr/bin/rk-daemon
+KERNEL_MODULE=ratekeeper
+
+test -f $DAEMON || exit 0
+
+. /lib/lsb/init-functions
+
+# Read configuration variable file if it is present
+[ -r /etc/default/ratekeeper ] && . /etc/default/ratekeeper
+
+every_if () {
+   ifconfig -a | awk '/HWaddr/{print $1}';
+}
+
+rk_cleanup () {
+   for i in $(every_if); do
+      tc qdisc del dev $i root    > /dev/null 2>&1
+      tc qdisc del dev $i ingress > /dev/null 2>&1
+   done
+   rmmod ratekeeper > /dev/null 2>&1
+   rmmod act_mirred > /dev/null 2>&1
+   rmmod act_police > /dev/null 2>&1
+   rmmod ifb        > /dev/null 2>&1
+}
+
+# Setting default rk kernel module parameters
+if [ -z "${RK_INTERVAL}" ]; then  RK_INTERVAL=1024; fi
+if [ -z "${RK_THRESHOLD}" ]; then  RK_THRESHOLD=62; fi
+
+if [ -z "${RKD_THRESHOLD}" ]; then  RKD_THRESHOLD=950; fi
+if [ -z "${RKD_INTERVAL}" ]; then  RKD_INTERVAL=500; fi
+if [ -z "${RKD_DECREASE}" ]; then  RKD_DECREASE=5; fi
+if [ -z "${RKD_INCREASE}" ]; then  RKD_INCREASE=40; fi
+
+case "$1" in
+
+  start)
+   rk_cleanup
+   modprobe ratekeeper RK_INTERVAL=${RK_INTERVAL} RK_THRESHOLD=${RK_THRESHOLD}
+   if [ -z "$(lsmod | grep ${KERNEL_MODULE})" ]; then
+      log_warning_msg "Ratekeeper kernel module not found, not starting..."
+      log_end_msg 1
+   elif [ -z "${RK_PNIC}" ]; then
+      log_warning_msg "PNIC not defined in /etc/default/ratekeeper, not starting..."
+      log_end_msg 1
+   else
+       log_begin_msg "Starting ratekeeper daemon"
+       start-stop-daemon --start --quiet --exec \
+           $DAEMON -- ${RK_PNIC} \
+           -t ${RKD_THRESHOLD} \
+           -i ${RKD_INTERVAL} \
+           -d ${RKD_DECREASE} \
+           -r ${RKD_INCREASE} \
+           &> /var/log/ratekeeper 2>&1
+       log_end_msg $?
+   fi
+    ;;
+
+  stop)
+   log_begin_msg "Stopping ratekeeper daemon"
+   rk_cleanup
+   start-stop-daemon --stop --quiet --exec $DAEMON
+   log_end_msg $?
+    ;;
+
+ restart|reload)
+   log_begin_msg "Restarting ratekeeper daemon"
+   start-stop-daemon --stop --verbose --exec $DAEMON
+   rk_cleanup
+
+   modprobe ratekeeper RK_INTERVAL=${RK_INTERVAL} RK_THRESHOLD=${RK_THRESHOLD}
+   if [ -z "$(lsmod | grep ${KERNEL_MODULE})" ]; then
+      log_warning_msg "Ratekeeper kernel module not found, not starting..."
+      log_end_msg 1
+   elif [ -z "${RK_PNIC}" ]; then
+      log_warning_msg "PNIC not defined in /etc/default/ratekeeper, not starting..."
+      log_end_msg 1
+   else
+       start-stop-daemon --start --quiet --exec \
+           $DAEMON -- ${RK_PNIC} \
+           -t ${RKD_THRESHOLD} \
+           -i ${RKD_INTERVAL} \
+           -d ${RKD_DECREASE} \
+           -r ${RKD_INCREASE} \
+           &> /var/log/ratekeeper 2>&1
+       log_end_msg $?
+   fi
+    ;;
+
+  *)
+    echo "Usage: /etc/init.d/ratekeeper {start|stop|restart}"
+    exit 1
+    ;;
+esac
+
+exit 0

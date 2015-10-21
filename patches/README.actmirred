@@ -1,0 +1,46 @@
+Here are a few comments about patching the act_mirred kernel module...
+
+act_mirred.ko kernel module must be patched to support the INTERCEPT action 
+that allows messages to be trapped by the ratekeeper daemon. Different
+versions of the act_mirred code require a different patch.  Patches for the 
+different versions can be found in the patches/act_mirred.patch directory.
+
+Automatic download/patching
+
+The script dlnd_patch_actmirred.sh can be used to automatically download
+the correct act_mirred.c version based on the kernel version identified by 
+./configure, and apply the appropriate patch. 
+
+The source code for act_mirred.c is downloaded using wget from:
+https://git.kernel.org/cgit/linux/kernel/git/stable/linux-stable.git
+
+Manual process
+
+To download and path the act_mirror.c file yourself, download the file 
+to the kernel/tc directory and patch it prior to building the ratekeeper 
+kernel module.
+
+The following equivalency table can be used to manually patch act_mirred.c
+
+   act_mirred-3.0.c act_mirred-3.0.patch
+   act_mirred-3.1.c act_mirred-3.1.patch
+   act_mirred-3.2.c act_mirred-3.1.patch
+   act_mirred-3.3.c act_mirred-3.1.patch
+   act_mirred-3.4.c act_mirred-3.1.patch
+   act_mirred-3.5.c act_mirred-3.5.patch
+   act_mirred-3.6.c act_mirred-3.6.patch
+   act_mirred-3.7.c act_mirred-3.6.patch
+   act_mirred-3.8.c act_mirred-3.6.patch
+   act_mirred-3.9.c act_mirred-3.9.patch
+   act_mirred-3.10.c act_mirred-3.9.patch
+   act_mirred-3.11.c act_mirred-3.11.patch
+   act_mirred-3.12.c act_mirred-3.11.patch
+   act_mirred-3.13.c act_mirred-3.13.patch
+   act_mirred-3.14.c act_mirred-3.14.patch
+   act_mirred-3.15.c act_mirred-3.15.patch
+   act_mirred-3.16.c act_mirred-3.15.patch
+   act_mirred-3.17.c act_mirred-3.17.patch
+   act_mirred-3.18.c act_mirred-3.17.patch
+   act_mirred-3.19.c act_mirred-3.19.patch
+   act_mirred-4.0.c act_mirred-3.19.patch
+   act_mirred-4.1.c act_mirred-4.1.patch 

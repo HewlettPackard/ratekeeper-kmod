@@ -1,0 +1,138 @@
+--- act_mirred_orig.c	2015-07-28 22:43:28.725693995 -0700
++++ act_mirred.c	2015-07-28 22:42:00.517694299 -0700
+@@ -29,12 +29,37 @@
+ 
+ #include <linux/if_arp.h>
+ 
++#include "../../include/monitor.h"
++
+ #define MIRRED_TAB_MASK     7
+ static struct tcf_common *tcf_mirred_ht[MIRRED_TAB_MASK + 1];
+ static u32 mirred_idx_gen;
+ static DEFINE_RWLOCK(mirred_lock);
+ static LIST_HEAD(mirred_list);
+ 
++ /* This mask defines which bits are acctually being used by the
++  * module. All the other bits are used to index a Ratekeeper monitor
++  * instance. */
++#define RK_EACT_MASK          0x80000007
++#define RK_GET_EACT(v)        (v & RK_EACT_MASK)
++#define RK_GET_IDX(v)         ((v & ~RK_EACT_MASK)>>3)
++/* n = new value for field, o = old value for field */
++#define RK_SET_IDX(n,o)       (((n<<3) & ~RK_EACT_MASK) | o)
++#define RK_SET_EACT(n,o)      (RK_GET_EACT(n) | o)
++
++#define TCA_INTERCEPT 5
++
++/**
++ * The parameters are:
++ * @skb: reference to the packet itself.
++ * @at_ifindex: the ifindex of the device that this packet should be
++ *              captured by monitor if it decides to do so.
++ * @intance_idx: cache of monitor instance, to search which instance
++ *               is associated with this packet in O(1).
++ */
++int (*rk_hook)(struct sk_buff *skb, int at_ifindex, int *instance_idx);
++EXPORT_SYMBOL(rk_hook);
++
+ static struct tcf_hashinfo mirred_hash_info = {
+ 	.htab	=	tcf_mirred_ht,
+ 	.hmask	=	MIRRED_TAB_MASK,
+@@ -83,6 +108,7 @@
+ 	switch (parm->eaction) {
+ 	case TCA_EGRESS_MIRROR:
+ 	case TCA_EGRESS_REDIR:
++	case TCA_INTERCEPT:
+ 		break;
+ 	default:
+ 		return -EINVAL;
+@@ -127,7 +153,7 @@
+ 
+ 	spin_lock_bh(&m->tcf_lock);
+ 	m->tcf_action = parm->action;
+-	m->tcfm_eaction = parm->eaction;
++	m->tcfm_eaction = RK_SET_EACT(parm->eaction, 0);
+ 	if (dev != NULL) {
+ 		m->tcfm_ifindex = parm->ifindex;
+ 		if (ret != ACT_P_CREATED)
+@@ -149,19 +175,21 @@
+ {
+ 	struct tcf_mirred *m = a->priv;
+ 
+-	if (m)
++	if (m) {
++     		m->tcfm_eaction = RK_GET_EACT(m->tcfm_eaction);
+ 		return tcf_mirred_release(m, bind);
++   }
+ 	return 0;
+ }
+ 
+-static int tcf_mirred(struct sk_buff *skb, const struct tc_action *a,
++static int tcf_mirred(struct sk_buff *skb, struct tc_action *a,
+ 		      struct tcf_result *res)
+ {
+ 	struct tcf_mirred *m = a->priv;
+ 	struct net_device *dev;
+ 	struct sk_buff *skb2;
+ 	u32 at;
+-	int retval, err = 1;
++	int retval, err = 1, instance_idx, ret;
+ 
+ 	spin_lock(&m->tcf_lock);
+ 	m->tcf_tm.lastuse = jiffies;
+@@ -180,6 +208,22 @@
+ 		goto out;
+ 	}
+ 
++	/* Ratekeeper hook */
++	if (RK_GET_EACT(m->tcfm_eaction) == TCA_INTERCEPT) {
++		retval = TC_ACT_PIPE;
++		if (rk_hook) {
++			instance_idx = RK_GET_IDX(m->tcfm_eaction);
++			if ((ret = rk_hook(skb, dev->ifindex, &instance_idx)) == MON_UPCALL)
++				retval = TC_ACT_STOLEN;
++		 	/*DEBUG if (ret != MON_UPCALL && ret != MON_UPDATED && */
++		 	/*DEBUG 	  ret != (MON_UPDATED|MON_THRESHOLD)) */
++		 	/*DEBUG 	  printk(KERN_WARNING "RK ret: 0x%x", ret); */
++			m->tcfm_eaction = RK_SET_IDX(instance_idx, m->tcfm_eaction);
++		}
++		goto rk;
++	}
++
++
+ 	at = G_TC_AT(skb->tc_verd);
+ 	skb2 = skb_act_clone(skb, GFP_ATOMIC, m->tcf_action);
+ 	if (skb2 == NULL)
+@@ -191,12 +235,13 @@
+ 	}
+ 
+ 	/* mirror is always swallowed */
+-	if (m->tcfm_eaction != TCA_EGRESS_MIRROR)
++	if (RK_GET_EACT(m->tcfm_eaction) != TCA_EGRESS_MIRROR)
+ 		skb2->tc_verd = SET_TC_FROM(skb2->tc_verd, at);
+ 
+ 	skb2->skb_iif = skb->dev->ifindex;
+ 	skb2->dev = dev;
+-	err = dev_queue_xmit(skb2);
++	dev_queue_xmit(skb2);
++	err = 0;
+ 
+ out:
+ 	if (err) {
+@@ -208,6 +253,7 @@
+ 	} else {
+ 		retval = m->tcf_action;
+ 	}
++rk:
+ 	spin_unlock(&m->tcf_lock);
+ 
+ 	return retval;
+@@ -222,7 +268,7 @@
+ 		.action  = m->tcf_action,
+ 		.refcnt  = m->tcf_refcnt - ref,
+ 		.bindcnt = m->tcf_bindcnt - bind,
+-		.eaction = m->tcfm_eaction,
++		.eaction = RK_GET_EACT(m->tcfm_eaction),
+ 		.ifindex = m->tcfm_ifindex,
+ 	};
+ 	struct tcf_t t;
