@@ -1,12 +1,28 @@
-ratekeeper Quickstart
--------------------
+ratekeeper-kmod - Linux kernel module for the ratekeeper mechanism
 
-Information:
-    http://www.linuxfoundation.org/collaborate/workgroups/networking/iproute2
+Information
+===========
+
+Git:
+    https://github.com/HewlettPackard/ratekeeper-kmod.git
+
+License:
+    GPLv2
+
+Overview
+========
+
+  ratekeeper is a kernel module that implements the ratekeper link bandwidth
+  guarantee mechanism for multi-tenant data-centers.
+
+  The mechanism enforces dynamic rate assignments by combining egress and ingress 
+  traffic control at the end machines with packet drops and explicit feedback 
+  notifications. It also imposes egress rate limits on remote senders through a 
+  distributed control protocol.
 
 
 Build Details
--------------
+=============
 
   Before the ratekeeper module can be built, iproute2 and act_mirred.ko must be
   patched and installed.  See instructions below on how to do this.
@@ -17,7 +33,7 @@ Build Details
 
 
 How to compile this
--------------------
+===================
 
 1. iproute2
 
