@@ -1,3 +1,3 @@
-## ratekeeper-kmod - Linux kernel module for the ratekeeper mechanism
+## Linux kernel module for the ratekeeper mechanism
 
 Please see [README](../master/README) file for more information.
