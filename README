@@ -100,3 +100,13 @@ of the act_mirred.c file.  If you are running behind a proxy and encounter this 
 the following command might help instead:
 
 sudo sh -c "export https_proxy=$https_proxy; make -j5 install"
+
+4. Configure interface
+
+Configure the physical NIC the ratekeeper service will use (the NIC traffic
+from the different VMs will be sent/received on).  To do this, set the RK_PNIC
+variable in the /etc/default/ratekeeper configuration file.
+
+5. Start the Ratekeeper Service
+
+/etc/init.d/ratekeeper start
