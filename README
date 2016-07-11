@@ -29,7 +29,7 @@ Build Details
 
   Note that configure may refuse to build if it considers your linux kernel 
   too new or too old. If you know what you are doing, you can override this 
-  check by passing --force.
+  check by passing --force-act-mirred-ver.
 
 
 How to compile this
@@ -37,29 +37,35 @@ How to compile this
 
 1. iproute2
 
-- Download the appropriate version of iproute2 package source code
+Download the appropriate version of iproute2 package source code
 
 Download:
     http://www.kernel.org/pub/linux/utils/net/iproute2/
 Repository:
     git://git.kernel.org/pub/scm/linux/kernel/git/shemminger/iproute2.git
 
-- Apply the provided patch, then compile and install
+2. act_mirred.ko
+
+The provided configure/make will attempt to download the appropriate act_mirred.c 
+source code for your kernel version and apply the corresponding patch. 
+
+configure
+make
+
+Otherwise you can manually download the appropriate act_mirred.c version
+from the following url and apply the corresponding patch (located in
+<RK_DIR>/patches/act_mirred.patch:
+
+Download:
+    https://git.kernel.org/cgit/linux/kernel/git/stable/linux-stable.git/plain/net/sched/act_mirred.c
+
+3. Compile and install
 
 cd iproute2-version
 patch -p1 < <RK_DIR>/patches/iproute.patch
 compile and install iproute2
 
 (requires bison, flex, libdb-dev)
-
-2. act_mirred.ko
-
-- Download the appropriate act_mirred.c source code for your kernel version
-
-Download:
-    https://git.kernel.org/cgit/linux/kernel/git/stable/linux-stable.git/plain/net/sched/act_mirred.c
-
-- Apply corresponding patch, then compile and install
 
 3. uthash
 
@@ -69,6 +75,11 @@ as its underlying hash table implementation.
 
 Download:
     http://uthash.sourceforge.net/
+Repository: 
+    git://github.com/troydhanson/uthash
+
+uthash is a header file only, there is no library code to link against.
+Copy the uthash.h header file located in the /src directory into /usr/include/
 
 4. libnl, libnl-genl
 
@@ -77,8 +88,15 @@ The libnl suite is a collection of libraries providing APIs to netlink protocol 
 Download:
     http://www.infradead.org/~tgr/libnl/
 
+Compile and install
 
 3. make
 
 make
 sudo make -j5 install
+
+Sometimes proxy configurations can prevent the automatic download and patch
+of the act_mirred.c file.  If you are running behind a proxy and encounter this problem, 
+the following command might help instead:
+
+sudo sh -c "export https_proxy=$https_proxy; make -j5 install"

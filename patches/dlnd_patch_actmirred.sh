@@ -14,7 +14,7 @@ ACT_MIRRED_URL="https://git.kernel.org/cgit/linux/kernel/git/stable/linux-stable
 
 get_actmirred_patch_version()
 {
-    ACT_MIRRED_VERSION=$(uname -r | cut -d '.' -f1,2) 
+    #ACT_MIRRED_VERSION=$(uname -r | cut -d '.' -f1,2) 
 
     echo "act_mirred for kernel version: $ACT_MIRRED_VERSION"
 

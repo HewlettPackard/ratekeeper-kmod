@@ -64,7 +64,7 @@ check_kernelversion()
                 echo "Error: kernel is too old for this ratekeeper-kmod release."
                 echo
                 exit 1
-        elif [[ "$kern_ver" > "0004.0001.9999" ]]; then 
+        elif [[ "$kern_ver" > "0004.0002.9999" ]]; then 
 		echo no
                 echo
                 echo "Error: kernel is more recent than RK modules delivered with this release."
