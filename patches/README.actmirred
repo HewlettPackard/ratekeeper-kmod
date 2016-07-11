@@ -44,3 +44,4 @@ The following equivalency table can be used to manually patch act_mirred.c
    act_mirred-3.19.c act_mirred-3.19.patch
    act_mirred-4.0.c act_mirred-3.19.patch
    act_mirred-4.1.c act_mirred-4.1.patch 
+   act_mirred-4.2.c act_mirred-4.2.patch 
