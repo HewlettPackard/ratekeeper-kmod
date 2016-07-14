@@ -35,7 +35,7 @@ Build Details
 How to compile this
 ===================
 
-1. iproute2
+1. Download iproute2
 
 Download the appropriate version of iproute2 package source code
 
@@ -44,26 +44,28 @@ Download:
 Repository:
     git://git.kernel.org/pub/scm/linux/kernel/git/shemminger/iproute2.git
 
-2. act_mirred.ko
+2. Patch act_mirred.ko
 
 The provided configure/make will attempt to download the appropriate act_mirred.c 
-source code for your kernel version and apply the corresponding patch. 
+source code for your kernel version and apply the corresponding patch. If the 
+downloaded version of iproute2 does not match the kernel version, the --force-act-mirred-ver
+option must be used to reflect the corresponding act_mirred.c version to download.
 
 configure
 make
 
 Otherwise you can manually download the appropriate act_mirred.c version
 from the following url and apply the corresponding patch (located in
-<RK_DIR>/patches/act_mirred.patch:
+<RK_DIR>/patches/act_mirred.patch/:
 
 Download:
     https://git.kernel.org/cgit/linux/kernel/git/stable/linux-stable.git/plain/net/sched/act_mirred.c
 
-3. Compile and install
+3. Patch, compile and install iproute2
 
-cd iproute2-version
+cd iproute2-<version>
 patch -p1 < <RK_DIR>/patches/iproute.patch
-compile and install iproute2
+compile and install
 
 (requires bison, flex, libdb-dev)
 
@@ -88,9 +90,10 @@ The libnl suite is a collection of libraries providing APIs to netlink protocol 
 Download:
     http://www.infradead.org/~tgr/libnl/
 
+cd libnl-<version>
 Compile and install
 
-3. make
+3. Compile and install ratekeeper
 
 make
 sudo make -j5 install
@@ -101,7 +104,7 @@ the following command might help instead:
 
 sudo sh -c "export https_proxy=$https_proxy; make -j5 install"
 
-4. Configure interface
+4. Configure network interface
 
 Configure the physical NIC the ratekeeper service will use (the NIC traffic
 from the different VMs will be sent/received on).  To do this, set the RK_PNIC
