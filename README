@@ -70,7 +70,7 @@ sudo make install
 
 (requires bison, flex, libdb-dev)
 
-3. uthash
+4. uthash
 
 The ratekeeper daemon uses a hash table to maintain the state of each monitor 
 that is in the ratekeeper recovery phase. Ratekeeper currently uses uthash
@@ -84,7 +84,7 @@ Repository:
 uthash is a header file only, there is no library code to link against.
 Copy the uthash.h header file located in the /src directory into /usr/include/
 
-4. libnl, libnl-genl
+5. libnl, libnl-genl
 
 The libnl suite is a collection of libraries providing APIs to netlink protocol based Linux kernel interfaces.
 
@@ -96,7 +96,7 @@ cd libnl-<version>
 make
 sudo make install
 
-3. Compile and install ratekeeper
+6. Compile and install ratekeeper
 
 sudo make -j5 install
 
@@ -107,12 +107,12 @@ the following command might help instead:
 
 sudo sh -c "export http_proxy=$http_proxy; make -j5 install"
 
-4. Configure network interface
+7. Configure network interface
 
 Configure the physical NIC the ratekeeper service will use (the NIC traffic
 from the different VMs will be sent/received on).  To do this, set the RK_PNIC
 variable in the /etc/default/ratekeeper configuration file.
 
-5. Start the Ratekeeper Service
+8. Start the Ratekeeper Service
 
 /etc/init.d/ratekeeper start
