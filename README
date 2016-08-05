@@ -1,5 +1,4 @@
 ratekeeper-kmod - Linux kernel module for the ratekeeper mechanism
-
 Information
 ===========
 
@@ -51,7 +50,7 @@ source code for your kernel version and apply the corresponding patch. If the
 downloaded version of iproute2 does not match the kernel version, the --force-act-mirred-ver
 option must be used to reflect the corresponding act_mirred.c version to download.
 
-configure
+./configure
 make
 
 Otherwise you can manually download the appropriate act_mirred.c version
@@ -65,7 +64,9 @@ Download:
 
 cd iproute2-<version>
 patch -p1 < <RK_DIR>/patches/iproute.patch
-compile and install
+./configure
+make
+sudo make install
 
 (requires bison, flex, libdb-dev)
 
@@ -91,18 +92,20 @@ Download:
     http://www.infradead.org/~tgr/libnl/
 
 cd libnl-<version>
-Compile and install
+./configure
+make
+sudo make install
 
 3. Compile and install ratekeeper
 
-make
 sudo make -j5 install
 
 Sometimes proxy configurations can prevent the automatic download and patch
 of the act_mirred.c file.  If you are running behind a proxy and encounter this problem, 
+your sudoers configuration most likely specifies to reset env variables,
 the following command might help instead:
 
-sudo sh -c "export https_proxy=$https_proxy; make -j5 install"
+sudo sh -c "export http_proxy=$http_proxy; make -j5 install"
 
 4. Configure network interface
 
