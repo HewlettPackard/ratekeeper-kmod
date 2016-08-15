@@ -34,20 +34,12 @@ Build Details
 How to compile this
 ===================
 
-1. Download iproute2
 
-Download the appropriate version of iproute2 package source code
-
-Download:
-    http://www.kernel.org/pub/linux/utils/net/iproute2/
-Repository:
-    git://git.kernel.org/pub/scm/linux/kernel/git/shemminger/iproute2.git
-
-2. Patch act_mirred.ko
+1. Patch act_mirred.ko
 
 The provided configure/make will attempt to download the appropriate act_mirred.c 
 source code for your kernel version and apply the corresponding patch. If the 
-downloaded version of iproute2 does not match the kernel version, the --force-act-mirred-ver
+downloaded version does not match the kernel version, the --force-act-mirred-ver
 option must be used to reflect the corresponding act_mirred.c version to download.
 
 ./configure
@@ -59,6 +51,15 @@ from the following url and apply the corresponding patch (located in
 
 Download:
     https://git.kernel.org/cgit/linux/kernel/git/stable/linux-stable.git/plain/net/sched/act_mirred.c
+
+2. Download iproute2
+
+Download the appropriate version of iproute2 package source code
+
+Download:
+    http://www.kernel.org/pub/linux/utils/net/iproute2/
+Repository:
+    git://git.kernel.org/pub/scm/linux/kernel/git/shemminger/iproute2.git
 
 3. Patch, compile and install iproute2
 
